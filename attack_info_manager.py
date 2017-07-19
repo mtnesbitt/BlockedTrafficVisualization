@@ -1,28 +1,27 @@
 import requests
 import json
 
+import time
+
 
 def info_generator():
-    filename = '20170531-inbound-block-ips-protocol.txt'
     locations = {}
+    while True:
+        r1 = requests.get('http://10.230.1.59:5000')
+        line = r1.text
+        (attack_date_time, attack_ip, attack_protocol) = line.split(",")
+        if attack_ip not in locations:
 
-    with open(filename, 'r') as f:
-        for line in f:
-            (attack_date, attack_time, attack_ip, attack_protocol) = line.split()
+            r2 = requests.get('http://localhost:8080/json/' + attack_ip)
+            info = json.loads(r2.text)
+            locations[attack_ip] = (float(info['latitude']), float(info['longitude']))
 
-            if attack_ip not in locations:
+            lat = float(info['latitude'])
+            lon = float(info['longitude'])
+        else:
+            (lat, lon) = locations[attack_ip]
 
-                r = requests.get('http://localhost:8080/json/' + attack_ip)
-                info = json.loads(r.text)
-                locations[attack_ip] = (float(info['latitude']), float(info['longitude']))
-
-                lat = float(info['latitude'])
-                lon = float(info['longitude'])
-            else:
-                (lat, lon) = locations[attack_ip]
-
-            yield (lon, lat, attack_protocol)
-
+        yield (lon, lat, attack_protocol)
 
 def get_color(protocol):
     if protocol == 'tcp':

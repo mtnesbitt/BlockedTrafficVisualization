@@ -33,12 +33,13 @@ class Map(Frame):
                           "Excepteur sint occaecat cupidatat non proident," + "\n"
                           "sunt in culpa qui officia deserunt mollit anim id est laborum.")
 
-        text.SetBackgroundColour("GREEN")
+        text.SetBackgroundColour("WHITE")
 
         self.figure = Figure()
         self.canvas = FigureCanvas(self, -1, self.figure)
 
         self.sizer = FlexGridSizer(cols=2, hgap=10, vgap=10)
+        self.sizer = BoxSizer()
         self.sizer.Add(self.canvas)
         self.sizer.Add(panel)
         self.SetSizer(self.sizer)
@@ -52,10 +53,11 @@ class Map(Frame):
         self.timer.Start(milliseconds=50, oneShot=False)
 
     def plot_map(self):
-        self.data = AttackInfoManager(25, 100, 10)
+        self.data = AttackInfoManager(25, 100, 50)
         self.ax = self.figure.add_subplot(111)
-        self.m = Basemap(projection='robin', resolution="c", area_thresh=1000, lat_0=0, lon_0=130, ax=self.ax)
+        self.m = Basemap(projection='cyl', resolution="c", lat_0=0, lon_0=0, ax=self.ax)
         self.m.drawcoastlines()
+        self.m.drawcountries()
         xx, yy = self.m(self.data.get_lons(), self.data.get_lats())
         self.scatter = self.m.scatter(xx, yy, s=self.data.get_sizes(), c=self.data.get_colors())
         self.figure.canvas.draw()

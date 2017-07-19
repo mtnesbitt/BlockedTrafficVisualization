@@ -4,7 +4,7 @@ from matplotlib import animation
 import numpy as np
 
 fig = plt.figure()
-m = Basemap(projection='merc',llcrnrlat=-60,urcrnrlat=70,\
+m = Basemap(projection='merc',llcrnrlat=-60,urcrnrlat=70,
             llcrnrlon=-180,urcrnrlon=180,resolution='c')
 
 m.drawcoastlines()
@@ -12,7 +12,7 @@ m.drawcoastlines()
 bethlehem_lat, bethlehem_lon = 40.6552, -75.3814
 
 x,y = m([0, bethlehem_lon], [0, bethlehem_lat])
-#line = m.plot(x, y, 'ro-', markersize=5)[0]
+
 line = m.drawgreatcircle(0, 0, bethlehem_lon, bethlehem_lat,)[0]
 
 print(line)
