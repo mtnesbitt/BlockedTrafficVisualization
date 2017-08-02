@@ -1,10 +1,12 @@
+from threading import Thread
+
 import requests
 import json
 
 import time
 import datetime
 import ast
-
+import json
 
 def get_color(protocol):
     if protocol == 'tcp':
@@ -28,46 +30,38 @@ class AttackInfoManager:
         self.colors = []
         self.initial_size = initial_size
         self.reduction_amount = reduction_amount
-        self.get_attacks()
         self.num_values = 0
+        self.attack_times = []
 
-    def get_attacks(self):
+    def get_attacks_since(self, timestamp):
         locations = {}
-        attack_times = []
+        print(timestamp)
 
-        starting_time = datetime.datetime.now() - datetime.timedelta(seconds=30)
 
-        r1 = requests.get('http://10.230.1.59:5000/timestamp?t=' + str(starting_time))
+        r1 = requests.get('http://10.230.1.59:5000/timestamp?t=' + timestamp)
 
-        while True:
+        attacks = str(r1.text)
+        attacks_list = ast.literal_eval(attacks)
 
-            attacks = ast.literal_eval(r1.text)
-            self.num_values = attacks
+        for a in attacks_list:
+            (attack_time, attack_ip, attack_protocol) = a.split(",")
+            self.attack_times.append(attack_time)
+            if attack_ip not in locations:
 
-            for a in attacks:
-                (attack_time, attack_ip, attack_protocol) = a.split(",")
-                attack_times.append(attack_time)
+                r2 = requests.get('http://localhost:8080/json/' + attack_ip)
+                info = json.loads(r2.text)
+                locations[attack_ip] = (float(info['latitude']), float(info['longitude']))
 
-                if attack_ip not in locations:
+                lat = float(info['latitude'])
+                lon = float(info['longitude'])
 
-                    r2 = requests.get('http://localhost:8080/json/' + attack_ip)
-                    info = json.loads(r2.text)
-                    locations[attack_ip] = (float(info['latitude']), float(info['longitude']))
+            else:
+                (lat, lon) = locations[attack_ip]
 
-                    lat = float(info['latitude'])
-                    lon = float(info['longitude'])
-
-                else:
-                    (lat, lon) = locations[attack_ip]
-
-                self.lons.append(lon)
-                self.lats.append(lat)
-                self.colors.append(get_color(attack_protocol))
-                self.sizes.append(self.initial_size)
-
-                if a is attacks[-1]:
-                    new_attack_time = a.split(",")[0]
-                    r1 = requests.get('http://10.230.1.59:5000/timestamp?t=' + str(new_attack_time))
+            self.lons.append(lon)
+            self.lats.append(lat)
+            self.colors.append(get_color(attack_protocol))
+            self.sizes.append(self.initial_size)
 
     def update(self):
         if self.sizes[0] - self.reduction_amount == 0:
@@ -80,13 +74,12 @@ class AttackInfoManager:
         for index in range(len(self.sizes)):
             self.sizes[index] -= self.reduction_amount
 
-        for count in range(self.num_values):
-            (lon, lat, attack_protocol) = next(self.g)
-            self.lons.append(lon)
-
-            self.lats.append(lat)
-            self.colors.append(get_color(attack_protocol))
-            self.sizes.append(self.initial_size)
+        # for count in range(self.num_values):
+        #     (lon, lat, attack_protocol) = next(self.g)
+        #     self.lons.append(lon)
+        #     self.lats.append(lat)
+        #     self.colors.append(get_color(attack_protocol))
+        #     self.sizes.append(self.initial_size)
 
     def get_lons(self):
         return self.lons
@@ -99,3 +92,6 @@ class AttackInfoManager:
 
     def get_colors(self):
         return self.colors
+
+    def get_attack_times(self):
+        return self.attack_times

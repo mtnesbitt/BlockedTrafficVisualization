@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+import datetime
+from threading import Thread
+
 import matplotlib
 
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
@@ -44,15 +47,15 @@ class Map(Frame):
         self.SetSizer(self.sizer)
 
         self.Fit()
-        self.plot_map()
-        self.Maximize()
 
+        self.Maximize()
+        self.plot_map()
         self.timer = Timer(self)
         self.Bind(EVT_TIMER, self.callback, self.timer)
         self.timer.Start(milliseconds=50, oneShot=False)
 
     def plot_map(self):
-        self.data = AttackInfoManager(100, 50)
+        self.data = AttackInfoManager(100, 10)
         self.ax = self.figure.add_subplot(111)
         self.m = Basemap(projection='cyl', resolution="c", lat_0=0, lon_0=0, ax=self.ax)
         self.m.drawcoastlines()
@@ -61,6 +64,12 @@ class Map(Frame):
         self.figure.canvas.draw()
 
     def callback(self, event):
+        if(len(self.data.get_attack_times()) == 0):
+            timestamp = datetime.datetime.strftime(datetime.datetime.now() - datetime.timedelta(seconds=5),
+                                                   '%Y/%m/%d%H:%M:%S')
+        else:
+            timestamp = self.data.get_attack_times()[-1]
+        self.data.get_attacks_since(timestamp)
         self.data.update()
         xx, yy = self.m(self.data.get_lons(), self.data.get_lats())
         # values need to be a 2D array, and zip makes a generator of tuples
