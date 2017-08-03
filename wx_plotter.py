@@ -68,7 +68,7 @@ class TrafficMap(Frame):
 
     def callback(self, event):
         if(len(self.data.get_attack_times()) == 0):
-            timestamp = datetime.datetime.strftime(datetime.datetime.now() - datetime.timedelta(seconds=1),
+            timestamp = datetime.datetime.strftime(datetime.datetime.now() - datetime.timedelta(seconds=2),
                                                    '%Y/%m/%d%H:%M:%S')
         else:
             timestamp = self.data.get_attack_times()[-1]
